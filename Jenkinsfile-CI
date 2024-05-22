@@ -8,7 +8,7 @@ pipeline {
     agent any
     // DECLARE THE VARIABLES HERE:
     environment {
-        DOCKER_USERNAME = "nasirpatel"     // check the 'ID' in your Jenkins credentials
+        DOCKER_USERNAME = "jovibih"     // check the 'ID' in your Jenkins credentials
     }
 
     stages {
@@ -23,7 +23,7 @@ pipeline {
             // use pipeline syntax generator to generate below step
             // 'Pipeline syntax' --> Steps 'Smaple step' --> git (enter url & branch & generate)
             steps {
-                dir ("DevopsProject1"){
+                dir ("CICD-Fully-Automated"){
                   script {
                     git branch: 'main', url: 'https://github.com/pandacloud1/DevopsProject1.git' 
                   }
