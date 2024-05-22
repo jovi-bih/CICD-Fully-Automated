@@ -25,7 +25,7 @@ pipeline {
             steps {
                 dir ("CICD-Fully-Automated"){
                   script {
-                    git branch: 'main', url: 'https://github.com/pandacloud1/DevopsProject1.git' 
+                    git branch: 'main', credentialsId: 'my_github_token', url: 'https://github.com/jovi-bih/CICD-Fully-Automated.git'
                   }
                 }
             }
@@ -34,7 +34,7 @@ pipeline {
         stage("3. Maven Unit Test") {  
             // Test the individual units of code 
             steps{
-                dir ("DevopsProject1"){
+                dir ("CICD-Fully-Automated"){
                   sh 'mvn test'        
                 }
             }
@@ -43,7 +43,7 @@ pipeline {
         stage('4. Maven Build') {
             // Build the application into an executable file (.jar)
             steps{
-                dir ("DevopsProject1"){
+                dir ("CICD-Fully-Automated"){
                   sh 'mvn clean install'   
                 }
             }
@@ -52,7 +52,7 @@ pipeline {
         stage("5. Maven Integration Test") {
             //  Test the interaction between different units of code
             steps{
-                dir ("DevopsProject1"){
+                dir ("CICD-Fully-Automated"){
                   sh 'mvn verify'          
                 }
             }
@@ -61,7 +61,7 @@ pipeline {
         stage('6. Docker Image Build') {
             // Build Docker Image 
             steps{
-                dir('DevopsProject1') {      // go to directory where 'Dockerfile' is stored
+                dir('CICD-Fully-Automated') {      // go to directory where 'Dockerfile' is stored
                     script {
                       def JOB = env.JOB_NAME.toLowerCase()           // Convert Jenkins Job name to lower-case
                       sh "docker build -t ${JOB}:${BUILD_NUMBER} ."  // 'JOB_NAME' & 'BUILD_NUMBER' are Jenkins Global variable
@@ -73,7 +73,7 @@ pipeline {
         stage('7. Docker Image Tag') {
             // Rename the Docker Image before pushing to Dockerhub
             steps{
-                dir('DevopsProject1') {      // go to directory where Docker Image is created
+                dir('CICD-Fully-Automated') {      // go to directory where Docker Image is created
                   script {
                     def JOB = env.JOB_NAME.toLowerCase() // Convert Jenkins Job name to lower-case
                     sh "docker tag ${JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
@@ -97,7 +97,7 @@ pipeline {
             // Login to Dockerhub & Push the image to Dockerhub
             steps{
                 script { 
-                  withCredentials([usernamePassword(credentialsId: 'my_dockerhub_creds', usernameVariable: 'docker_user', passwordVariable: 'docker_pass')]) {
+                 withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', passwordVariable: 'my_dockerhub_password', usernameVariable: 'my_dockerhub_user')]) {
                     sh "docker login -u '${docker_user}' -p '${docker_pass}'"
                     def JOB = env.JOB_NAME.toLowerCase() // Convert Jenkins Job name to lower-case
                     sh "docker push ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
