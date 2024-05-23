@@ -25,7 +25,7 @@ pipeline {
             steps {
                 dir ("CICD-Fully-Automated"){
                   script {
-                    git branch: 'main', credentialsId: 'my_github_token', url: 'https://github.com/jovi-bih/CICD-Fully-Automated.git'
+                    git branch: 'main', url: 'https://github.com/jovi-bih/CICD-Fully-Automated.git'
                   }
                 }
             }
