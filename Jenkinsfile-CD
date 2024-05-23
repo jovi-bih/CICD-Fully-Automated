@@ -6,10 +6,10 @@ pipeline {
     agent any
     // DECLARE THE VARIABLES HERE:
     environment {
-    NODE_IP = '<Node_Server_Private_IP>'   // paste your Node-Server private IP here
+    NODE_IP = '172.31.56.131'   // paste your Node-Server private IP here
     EC2_NAME = "ec2-user"                  // enter your AWS EC2 username
-    PIPELINE_NAME = "CI-PIPELINE"          // enter your pipeline name here 
-    PROJECT_NAME = "DevopsProject1"        // enter your Devops project name here
+    PIPELINE_NAME = "CICD-PIPELINE"          // enter your pipeline name here 
+    PROJECT_NAME = "CICD-Fully-Automated"        // enter your Devops project name here
     }
 
     stages {
