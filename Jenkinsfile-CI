@@ -4,114 +4,111 @@
 //  i. Store Dockerhub, EC2 pem key credentials in Jenkins Server
 // ii. Install 'ssh agent' plugin in Jenkins
 
+// JENKINS CI PIPELINE/
+// Purpose: The Code will be built into executable file (.jar) & pushed to Dockerhub
+// NOTE:
+//  i. Store Dockerhub, EC2 pem key credentials in Jenkins Server
+// ii. Install 'ssh agent' plugin in Jenkins
+
 pipeline {
     agent any
-    // DECLARE THE VARIABLES HERE:
+
     environment {
-        DOCKER_USERNAME = "jovibih"     // check the 'ID' in your Jenkins credentials
+        DOCKER_IMAGE = 'maven:3.8.6-openjdk-11'
+        DOCKER_ARGS = '-v /var/run/docker.sock:/var/run/docker.sock'
+        DOCKER_USERNAME = "jovibih"  // DockerHub username
     }
 
     stages {
         stage("1. Cleanup") {
-            // Clean workspace directory for the current build
             steps {
-                deleteDir ()             
+                deleteDir()  // Clean the workspace directory
             }
         }
 
-        stage ('2. Git Checkout') {
-            // use pipeline syntax generator to generate below step
-            // 'Pipeline syntax' --> Steps 'Smaple step' --> git (enter url & branch & generate)
+        stage('2. Git Checkout') {
             steps {
-                dir ("CICD-Fully-Automated"){
-                  script {
+                script {
                     git branch: 'main', url: 'https://github.com/jovi-bih/CICD-Fully-Automated.git'
-                  }
                 }
             }
-        }   
-        
-        stage("3. Maven Unit Test") {  
-            // Test the individual units of code 
-            steps{
-                dir ("CICD-Fully-Automated"){
-                  sh 'mvn test'        
+        }
+
+        stage("3. Maven Unit Test") {
+            steps {
+                script {
+                    docker.image(env.DOCKER_IMAGE).inside(env.DOCKER_ARGS) {
+                        sh 'mvn test'
+                    }
                 }
             }
         }
 
         stage('4. Maven Build') {
-            // Build the application into an executable file (.jar)
-            steps{
-                dir ("CICD-Fully-Automated"){
-                  sh 'mvn clean install'   
+            steps {
+                script {
+                    docker.image(env.DOCKER_IMAGE).inside(env.DOCKER_ARGS) {
+                        sh 'mvn clean install'
+                    }
                 }
             }
         }
 
         stage("5. Maven Integration Test") {
-            //  Test the interaction between different units of code
-            steps{
-                dir ("CICD-Fully-Automated"){
-                  sh 'mvn verify'          
+            steps {
+                script {
+                    docker.image(env.DOCKER_IMAGE).inside(env.DOCKER_ARGS) {
+                        sh 'mvn verify'
+                    }
                 }
             }
         }
 
         stage('6. Docker Image Build') {
-            // Build Docker Image 
-            steps{
-                dir('CICD-Fully-Automated') {      // go to directory where 'Dockerfile' is stored
-                    script {
-                      def JOB = env.JOB_NAME.toLowerCase()           // Convert Jenkins Job name to lower-case
-                      sh "docker build -t ${JOB}:${BUILD_NUMBER} ."  // 'JOB_NAME' & 'BUILD_NUMBER' are Jenkins Global variable
-                    }
+            steps {
+                script {
+                    def JOB = env.JOB_NAME.toLowerCase()
+                    sh "docker build -t ${JOB}:${BUILD_NUMBER} ."
                 }
             }
         }
-        
+
         stage('7. Docker Image Tag') {
-            // Rename the Docker Image before pushing to Dockerhub
-            steps{
-                dir('CICD-Fully-Automated') {      // go to directory where Docker Image is created
-                  script {
-                    def JOB = env.JOB_NAME.toLowerCase() // Convert Jenkins Job name to lower-case
+            steps {
+                script {
+                    def JOB = env.JOB_NAME.toLowerCase()
                     sh "docker tag ${JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
                     sh "docker tag ${JOB}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${JOB}:latest"
-                  }
                 }
-            } 
+            }
         }
 
         stage('8. Trivy Image Scan') {
-            // Scan Docker images for vulnerabilities 
-            steps{
-                script { 
-                  def JOB = env.JOB_NAME.toLowerCase() // Convert Jenkins Job name to lower-case
-                  sh "trivy image ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER} > scan.txt"
+            steps {
+                script {
+                    def JOB = env.JOB_NAME.toLowerCase()
+                    sh "trivy image ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER} > scan.txt"
                 }
             }
         }
 
         stage('9. Docker Image Push') {
-            // Login to Dockerhub & Push the image to Dockerhub
-            steps{
-                script { 
-                 withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', passwordVariable: 'my_dockerhub_password', usernameVariable: 'my_dockerhub_user')]) {
-                    sh "docker login -u '${docker_user}' -p '${docker_pass}'"
-                    def JOB = env.JOB_NAME.toLowerCase() // Convert Jenkins Job name to lower-case
-                    sh "docker push ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
-                    sh "docker push ${DOCKER_USERNAME}/${JOB}:latest"
-                  }
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', passwordVariable: 'my_dockerhub_password', usernameVariable: 'my_dockerhub_user')]) {
+                        sh "docker login -u '${my_dockerhub_user}' -p '${my_dockerhub_password}'"
+                        def JOB = env.JOB_NAME.toLowerCase()
+                        sh "docker push ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
+                        sh "docker push ${DOCKER_USERNAME}/${JOB}:latest"
+                    }
                 }
             }
         }
 
         stage('10. Docker Image Cleanup') {
-            // Remove the unwanted (dangling) images created in Jenkins Server to free-up space
-            steps{
-                script { 
-                  sh "docker image prune -af"
+            steps {
+                script {
+                    sh "docker image prune -af"
                 }
             }
         }
