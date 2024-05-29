@@ -95,8 +95,8 @@ pipeline {
         stage('9. Docker Image Push') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', passwordVariable: 'my_dockerhub_password', usernameVariable: 'my_dockerhub_user')]) {
-                        sh "docker login -u '${my_dockerhub_user}' -p '${my_dockerhub_password}'"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', passwordVariable: 'my_dockerhub_pass', usernameVariable: 'my_dockerhub_user')]) {
+                        sh "docker login -u '${dockerhub_user}' -p '${dockerhub_pass}'"
                         def JOB = env.JOB_NAME.toLowerCase()
                         sh "docker push ${DOCKER_USERNAME}/${JOB}:v${BUILD_NUMBER}"
                         sh "docker push ${DOCKER_USERNAME}/${JOB}:latest"
