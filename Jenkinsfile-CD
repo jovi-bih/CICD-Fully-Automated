@@ -37,7 +37,7 @@ pipeline {
             // i. Ensure to establish passwordless connection between Master & Node first
            // ii. Your deployment.yaml file must contain the Dockerhub image within the container block
             steps {
-              sshagent(['my_ec2_creds']) {          // store EC2 username & pem-key in Jenkins credentials
+              sshagent(['ec2-user']) {          // store EC2 username & pem-key in Jenkins credentials
                 sh "ssh -o StrictHostKeyChecking=no ${EC2_NAME}@${NODE_IP}"   // enter your Node-Server private IP here
                 sh "ssh -o StrictHostKeyChecking=no ${EC2_NAME}@${NODE_IP} kubectl apply -f deployment.yaml"
                 sh "ssh -o StrictHostKeyChecking=no ${EC2_NAME}@${NODE_IP} kubectl apply -f service.yaml"
